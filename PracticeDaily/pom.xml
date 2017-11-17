@@ -9,8 +9,8 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>lease-common</name>
-    <description>lease-common</description>
+    <name>common</name>
+    <description>common</description>
     <parent>
         <groupId>com.self.common</groupId>
         <artifactId>bom</artifactId>
