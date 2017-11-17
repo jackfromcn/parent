@@ -1,22 +1,22 @@
 package com.daily.common.util;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.Hashtable;
-import java.util.UUID;
-
-import javax.imageio.ImageIO;
-
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.Hashtable;
+import java.util.UUID;
 
 /**
  * @author wencheng
@@ -25,20 +25,36 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
  */
 public class QRCodeUtil {
     private static final String CHARSET = "utf-8";
+    /**
+     * 一维码宽度
+     */
     private static int BARCODE_WIDTH = 80;
+    /**
+     * 二维码宽度
+     */
     private static int QRCODE_WIDTH = 300;
-    private static String FORMAT = "jpg";// 生成的图片格式
-    private static int BLACK = 0x000000;// 编码的颜色
-    private static int WHITE = 0xFFFFFF;// 空白的颜色
+    /**
+     * 生成的图片格式
+     */
+    private static String FORMAT = "jpg";
+    /**
+     * 编码的颜色
+     */
+    private static int BLACK = 0x000000;
+    /**
+     * 空白的颜色
+     */
+    private static int WHITE = 0xFFFFFF;
 
-    // 二维码中间的图像配置。注意，由于二维码的容错率有限，因此中间遮挡的面积不要太大，否则可能解析不出来。
+    /**
+     * 二维码中间的图像配置。注意，由于二维码的容错率有限，因此中间遮挡的面积不要太大，否则可能解析不出来。
+     */
     private static int ICON_WIDTH = (int)(QRCODE_WIDTH / 6);
     private static int HALF_ICON_WIDTH = ICON_WIDTH / 2;
-    private static int FRAME_WIDTH = 2;// Icon四周的边框宽度
-
-    // 二维码读码器和写码器
-    private static final MultiFormatWriter WRITER = new MultiFormatWriter();
-    private static final MultiFormatReader READER = new MultiFormatReader();
+    /**
+     * Icon四周的边框宽度
+     */
+    private static int FRAME_WIDTH = 2;
 
     // 测试
     public static void main(String[] args) throws Exception {
@@ -46,7 +62,7 @@ public class QRCodeUtil {
          * 二维码测试。
          */
         String iconPath = "/Users/wencheng/Downloads/timg.jpeg";
-        String content = "http://www.baidu.com";
+        String content = "http://stg.lease.mljr.com/gw/alipay/forwardRequest";
         String path = "/Users/wencheng/Desktop/test_space/parent/PracticeDaily/src/test/";
         File qrCode = new File(path + (UUID.randomUUID() + "").replace("-","") + "." + FORMAT);
         File qrCodeWithIcon = new File(path + (UUID.randomUUID() + "").replace("-","") + "." + FORMAT);
@@ -112,7 +128,8 @@ public class QRCodeUtil {
         hints.put(EncodeHintType.CHARACTER_SET, CHARSET);
         hints.put(EncodeHintType.MARGIN, 1);
         // 长和宽一样，所以只需要定义一个SIZE即可
-        BitMatrix matrix = WRITER.encode(
+        // 二维码读码器和写码器
+        BitMatrix matrix = new MultiFormatWriter().encode(
                 content, BarcodeFormat.QR_CODE, QRCODE_WIDTH, QRCODE_WIDTH,hints);
         return toBufferedImage(matrix);
     }
@@ -130,7 +147,8 @@ public class QRCodeUtil {
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         hints.put(EncodeHintType.CHARACTER_SET, CHARSET);
         hints.put(EncodeHintType.MARGIN, 1);
-        BitMatrix matrix = WRITER.encode(
+        // 二维码读码器和写码器
+        BitMatrix matrix = new MultiFormatWriter().encode(
                 content, BarcodeFormat.QR_CODE, QRCODE_WIDTH, QRCODE_WIDTH,hints);
         // 读取Icon图像
         BufferedImage scaleImage = null;
@@ -235,9 +253,9 @@ public class QRCodeUtil {
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         hints.put(EncodeHintType.CHARACTER_SET, CHARSET);
         hints.put(EncodeHintType.MARGIN, 1);
-        MultiFormatWriter writer = new MultiFormatWriter();
+        // 二维码读码器和写码器
         // 一维码的宽>高。这里我设置为 宽:高=2:1
-        BitMatrix matrix = writer.encode(content,
+        BitMatrix matrix = new MultiFormatWriter().encode(content,
                 BarcodeFormat.EAN_13, BARCODE_WIDTH * 3, BARCODE_WIDTH,hints);
         return toBufferedImage(matrix);
     }
@@ -254,7 +272,8 @@ public class QRCodeUtil {
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
         Hashtable<DecodeHintType, Object> hints = new Hashtable<DecodeHintType, Object>();
         hints.put(DecodeHintType.CHARACTER_SET, CHARSET);
-        Result result = READER.decode(bitmap,hints);
+        // 二维码读码器和写码器
+        Result result = new MultiFormatReader().decode(bitmap,hints);
         // 这里丢掉了Result中其他一些数据
         return result.getText();
     }
@@ -272,14 +291,9 @@ public class QRCodeUtil {
     }
 
     public static final byte[] writeToBytes(BufferedImage image) throws IOException {
-        ByteArrayOutputStream os = null;
-        try {
-            os = new ByteArrayOutputStream();
-            ImageIO.write(image, FORMAT, os);
-            return os.toByteArray();
-        } finally {
-            close(os);
-        }
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(image, FORMAT, os);
+        return os.toByteArray();
     }
 
     /**
@@ -347,9 +361,4 @@ public class QRCodeUtil {
         return (BufferedImage) destImage;
     }
 
-    private static void close(OutputStream out) throws IOException {
-        if (out != null) {
-            out.close();
-        }
-    }
 }
