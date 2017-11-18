@@ -1,5 +1,6 @@
 package com.daily.common.util;
 
+import com.daily.common.util.generate.UniqueID;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.BitMatrix;
@@ -16,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
-import java.util.UUID;
 
 /**
  * @author wencheng
@@ -64,40 +64,57 @@ public class QRCodeUtil {
         String iconPath = "/Users/wencheng/Downloads/timg.jpeg";
         String content = "http://stg.lease.mljr.com/gw/alipay/forwardRequest";
         String path = "/Users/wencheng/Desktop/test_space/parent/PracticeDaily/src/test/";
-        File qrCode = new File(path + (UUID.randomUUID() + "").replace("-","") + "." + FORMAT);
-        File qrCodeWithIcon = new File(path + (UUID.randomUUID() + "").replace("-","") + "." + FORMAT);
+        File qrCode = new File(path + UniqueID.uuid() + "." + FORMAT);
+        File qrCodeWithIcon = new File(path + UniqueID.uuid() + "." + FORMAT);
         // 生成二维码
-        writeToFile(createQRCode(content), qrCode);
+//        writeToFile(createQRCode(content), qrCode);
+        QRCodeUtil.createQRCodeToFile(content, qrCode);
         // 生成带图标的二维码
-        writeToFile(createQRCodeWithIcon(content, iconPath), qrCodeWithIcon);
+//        writeToFile(createQRCodeWithIcon(content, iconPath), qrCodeWithIcon);
+        QRCodeUtil.createQRCodeWithIncoToFile(content,iconPath, qrCodeWithIcon);
+
+        System.out.println(QRCodeUtil.createQRCodeToPath(content, path));
+        System.out.println(QRCodeUtil.createQRCodeWithIncoToPath(content,iconPath,path));
         // 解析二维码
-        System.out.println(parseImage(qrCode));
+        System.out.println(QRCodeUtil.parseImage(qrCode));
         // 解析带图标的二维码
-        System.out.println(parseImage(qrCodeWithIcon));
+        System.out.println(QRCodeUtil.parseImage(qrCodeWithIcon));
 
         // 编码成字节数组
-        byte[] data = createQRCodeToBytes(content);
-        String result = parseQRFromBytes(data);
+        byte[] data = QRCodeUtil.createQRCodeToBytes(content);
+        String result = QRCodeUtil.parseQRFromBytes(data);
         System.out.println(result);
-        result = parseQRFromBytes(createQRCodeWithIncoToBytes(content, iconPath));
+        result = QRCodeUtil.parseQRFromBytes(createQRCodeWithIncoToBytes(content, iconPath));
         System.out.println(result);
 
         /**
          * 一维码测试。
          */
         String barCodeContent="6936983800013";
-        File barCode = new File(path + (UUID.randomUUID() + "").replace("-","") + "." + FORMAT);
+        File barCode = new File(path + UniqueID.uuid() + "." + FORMAT);
         // 生成一维码
-        writeToFile(createBarCode(barCodeContent), barCode);
+        QRCodeUtil.writeToFile(createBarCode(barCodeContent), barCode);
         // 解析一维码
         System.out.println(parseImage(barCode));
     }
 
+    /**
+     * 将String编码成一维条形码后,使用字节数组表示,便于传输.
+     * @param content
+     * @return
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static byte[] createBarCodeToBytes(String content)
+            throws WriterException, IOException {
+        BufferedImage image = createBarCode(content);
+        return writeToBytes(image);
+    }
 
     /**
      * 将String编码成二维码的图片后，使用字节数组表示，便于传输。
      *
-     * @param content
+     * @param content 内容
      * @return
      * @throws WriterException
      * @throws IOException
@@ -108,6 +125,14 @@ public class QRCodeUtil {
         return writeToBytes(image);
     }
 
+    /**
+     * 将String编码成二维码的图片&插入LOGO后，使用字节数组表示，便于传输。
+     * @param content 内容
+     * @param iconPath LOGO地址
+     * @return
+     * @throws IOException
+     * @throws WriterException
+     */
     public static byte[] createQRCodeWithIncoToBytes(String content, String iconPath)
             throws IOException, WriterException {
         BufferedImage image = createQRCodeWithIcon(content, iconPath);
@@ -115,13 +140,89 @@ public class QRCodeUtil {
     }
 
     /**
+     * 将String编码成一维条形码后,写入指定文件
+     * @param content
+     * @param barCodeFile
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static void createBarCodeToFile(String content, File barCodeFile)
+            throws WriterException, IOException {
+        writeToFile(createBarCode(content),barCodeFile);
+    }
+
+    /**
+     * 将String编码成二维码的图片后，写入指定文件
+     * @param content 内容
+     * @param qrCodeFile 二维码指定文件
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static void createQRCodeToFile(String content, File qrCodeFile)
+            throws WriterException, IOException {
+        writeToFile(createQRCode(content), qrCodeFile);
+    }
+
+    /**
+     * 将String编码成二维码的图片&插入LOGO后，写入指定文件
+     * @param content 内容
+     * @param iconPath LOGO地址
+     * @param qrCodeFile 二维码指定文件
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static void createQRCodeWithIncoToFile(String content, String iconPath, File qrCodeFile)
+            throws WriterException, IOException {
+        writeToFile(createQRCodeWithIcon(content, iconPath), qrCodeFile);
+    }
+
+    /**
+     * 将String编码成一维条形码的图片后，写入指定路径,fileName
+     * @param content 内容
+     * @param path 输出路径
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static void createBarCodeToPath(String content, String path)
+            throws WriterException, IOException {
+        writeToPath(createBarCode(content),path);
+    }
+
+    /**
+     * 将String编码成二维码的图片后，写入指定路径,fileName
+     * @param content 内容
+     * @param path 输出路径
+     * @return
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static String createQRCodeToPath(String content, String path)
+            throws WriterException, IOException {
+        return writeToPath(createQRCode(content), path);
+    }
+
+    /**
+     * 将String编码成二维码的图片&插入LOGO后，写入指定路径,返回路径+fileName
+     * @param content
+     * @param iconPath
+     * @param path
+     * @return
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static String createQRCodeWithIncoToPath(String content, String iconPath, String path)
+            throws WriterException, IOException {
+        return writeToPath(createQRCodeWithIcon(content, iconPath), path);
+    }
+
+    /**
      * 把一个String编码成二维码的BufferedImage.
      *
-     * @param content
+     * @param content 内容
      * @return
      * @throws WriterException
      */
-    public static final BufferedImage createQRCode(String content)
+    private static BufferedImage createQRCode(String content)
             throws WriterException {
         Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
@@ -136,12 +237,12 @@ public class QRCodeUtil {
 
     /**
      * 编码字符串为二维码，并在该二维码中央插入指定的图标。
-     * @param content
-     * @param iconPath
+     * @param content 内容
+     * @param iconPath LOGO地址
      * @return
      * @throws WriterException
      */
-    public static final BufferedImage createQRCodeWithIcon(
+    private static BufferedImage createQRCodeWithIcon(
             String content, String iconPath) throws WriterException {
         Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
@@ -214,7 +315,7 @@ public class QRCodeUtil {
     /**
      * 从一个二维码图片的字节信息解码出二维码中的内容。
      *
-     * @param data
+     * @param data 二维码字节数组
      * @return
      * @throws ReaderException
      * @throws IOException
@@ -229,12 +330,12 @@ public class QRCodeUtil {
     /**
      * 从一个图片文件中解码出二维码中的内容。
      *
-     * @param file
+     * @param file 二维码文件
      * @return 解析后的内容。
      * @throws IOException
      * @throws ReaderException
      */
-    public static final String parseImage(File file)
+    public static String parseImage(File file)
             throws IOException, ReaderException {
         BufferedImage image = ImageIO.read(file);
         return parseImage(image);
@@ -242,7 +343,7 @@ public class QRCodeUtil {
 
     /**
      * 将字符串编码成一维码（条形码）。
-     * @param content
+     * @param content 内容
      * @return
      * @throws WriterException
      * @throws IOException
@@ -266,7 +367,7 @@ public class QRCodeUtil {
      * @return
      * @throws NotFoundException
      */
-    public static final String parseImage(BufferedImage image)
+    private static String parseImage(BufferedImage image)
             throws NotFoundException {
         LuminanceSource source = new BufferedImageLuminanceSource(image);
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
@@ -279,18 +380,36 @@ public class QRCodeUtil {
     }
 
     /**
+     * 将BufferedImage对象输出到指定的目录中,返回fileName
+     * @param image
+     * @param path 指定目录
+     * @return
+     * @throws IOException
+     */
+    private static String writeToPath(BufferedImage image, String path) throws IOException {
+        String fileName = UniqueID.uuid() + "." + FORMAT;
+        if (path.endsWith("/")) {
+            path = path.substring(0,path.length()-1);
+        }
+        path = path + "/" + fileName;
+        File destFile = new File(path);
+        writeToFile(image, destFile);
+        return fileName;
+    }
+
+    /**
      * 将BufferedImage对象输出到指定的文件中。
      *
      * @param image
      * @param destFile
      * @throws IOException
      */
-    public static final void writeToFile(BufferedImage image, File destFile)
+    private static void writeToFile(BufferedImage image, File destFile)
             throws IOException {
         ImageIO.write(image, FORMAT, destFile);
     }
 
-    public static final byte[] writeToBytes(BufferedImage image) throws IOException {
+    private static byte[] writeToBytes(BufferedImage image) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(image, FORMAT, os);
         return os.toByteArray();
