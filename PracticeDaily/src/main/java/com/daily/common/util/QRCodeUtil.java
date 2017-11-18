@@ -61,16 +61,14 @@ public class QRCodeUtil {
         /**
          * 二维码测试。
          */
-        String iconPath = "/Users/wencheng/Downloads/timg.jpeg";
-        String content = "http://stg.lease.mljr.com/gw/alipay/forwardRequest";
-        String path = "/Users/wencheng/Desktop/test_space/parent/PracticeDaily/src/test/";
+        String iconPath = "logoPath";
+        String content = "www.baidu.com";
+        String path = "filePath";
         File qrCode = new File(path + UniqueID.uuid() + "." + FORMAT);
         File qrCodeWithIcon = new File(path + UniqueID.uuid() + "." + FORMAT);
         // 生成二维码
-//        writeToFile(createQRCode(content), qrCode);
         QRCodeUtil.createQRCodeToFile(content, qrCode);
         // 生成带图标的二维码
-//        writeToFile(createQRCodeWithIcon(content, iconPath), qrCodeWithIcon);
         QRCodeUtil.createQRCodeWithIncoToFile(content,iconPath, qrCodeWithIcon);
 
         System.out.println(QRCodeUtil.createQRCodeToPath(content, path));
@@ -93,9 +91,9 @@ public class QRCodeUtil {
         String barCodeContent="6936983800013";
         File barCode = new File(path + UniqueID.uuid() + "." + FORMAT);
         // 生成一维码
-        QRCodeUtil.writeToFile(createBarCode(barCodeContent), barCode);
+        QRCodeUtil.createBarCodeToFile(barCodeContent,barCode);
         // 解析一维码
-        System.out.println(parseImage(barCode));
+        System.out.println(QRCodeUtil.parseImage(barCode));
     }
 
     /**
