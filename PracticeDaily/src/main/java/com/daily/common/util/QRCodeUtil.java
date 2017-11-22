@@ -12,10 +12,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Hashtable;
 
 /**
@@ -61,9 +58,10 @@ public class QRCodeUtil {
         /**
          * 二维码测试。
          */
-        String iconPath = "logoPath";
-        String content = "www.baidu.com";
+        String iconPath = "timg.jpeg";
+        String content = "http://www.baidu.com";
         String path = "filePath";
+        File file = new File(iconPath);
         File qrCode = new File(path + UniqueID.uuid() + "." + FORMAT);
         File qrCodeWithIcon = new File(path + UniqueID.uuid() + "." + FORMAT);
         // 生成二维码
@@ -133,7 +131,21 @@ public class QRCodeUtil {
      */
     public static byte[] createQRCodeWithIncoToBytes(String content, String iconPath)
             throws IOException, WriterException {
-        BufferedImage image = createQRCodeWithIcon(content, iconPath);
+        BufferedImage image = createQRCodeWithIcon(content, readByBytes(iconPath));
+        return writeToBytes(image);
+    }
+
+    /**
+     * 将String编码成二维码的图片&插入LOGO后，使用字节数组表示，便于传输。
+     * @param content 内容
+     * @param iconBytes LOGO字节数组
+     * @return
+     * @throws IOException
+     * @throws WriterException
+     */
+    public static byte[] createQRCodeWithIncoToBytes(String content, byte[] iconBytes)
+            throws IOException, WriterException {
+        BufferedImage image = createQRCodeWithIcon(content, readByBytes(iconBytes));
         return writeToBytes(image);
     }
 
@@ -171,7 +183,20 @@ public class QRCodeUtil {
      */
     public static void createQRCodeWithIncoToFile(String content, String iconPath, File qrCodeFile)
             throws WriterException, IOException {
-        writeToFile(createQRCodeWithIcon(content, iconPath), qrCodeFile);
+        writeToFile(createQRCodeWithIcon(content, readByBytes(iconPath)), qrCodeFile);
+    }
+
+    /**
+     * 将String编码成二维码的图片&插入LOGO后，写入指定文件
+     * @param content 内容
+     * @param iconBytes LOGO字节数组
+     * @param qrCodeFile 二维码指定文件
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static void createQRCodeWithIncoToFile(String content, byte[] iconBytes, File qrCodeFile)
+            throws WriterException, IOException {
+        writeToFile(createQRCodeWithIcon(content, readByBytes(iconBytes)), qrCodeFile);
     }
 
     /**
@@ -200,17 +225,31 @@ public class QRCodeUtil {
     }
 
     /**
-     * 将String编码成二维码的图片&插入LOGO后，写入指定路径,返回路径+fileName
-     * @param content
-     * @param iconPath
-     * @param path
+     * 将String编码成二维码的图片&插入LOGO后，写入指定路径,fileName
+     * @param content 内容
+     * @param iconPath LOGO文件路径
+     * @param path 输出路径
      * @return
      * @throws WriterException
      * @throws IOException
      */
     public static String createQRCodeWithIncoToPath(String content, String iconPath, String path)
             throws WriterException, IOException {
-        return writeToPath(createQRCodeWithIcon(content, iconPath), path);
+        return writeToPath(createQRCodeWithIcon(content, readByBytes(iconPath)), path);
+    }
+
+    /**
+     * 将String编码成二维码的图片&插入LOGO后，写入指定路径,返回fileName
+     * @param content 内容
+     * @param iconBytes LOGO字节数组
+     * @param path 输出路径
+     * @return
+     * @throws WriterException
+     * @throws IOException
+     */
+    public static String createQRCodeWithIncoToPath(String content, byte[] iconBytes, String path)
+            throws WriterException, IOException {
+        return writeToPath(createQRCodeWithIcon(content, readByBytes(iconBytes)), path);
     }
 
     /**
@@ -236,12 +275,12 @@ public class QRCodeUtil {
     /**
      * 编码字符串为二维码，并在该二维码中央插入指定的图标。
      * @param content 内容
-     * @param iconPath LOGO地址
+     * @param iconImage LOGO图片
      * @return
      * @throws WriterException
      */
     private static BufferedImage createQRCodeWithIcon(
-            String content, String iconPath) throws WriterException {
+            String content, BufferedImage iconImage) throws WriterException {
         Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         hints.put(EncodeHintType.CHARACTER_SET, CHARSET);
@@ -252,7 +291,7 @@ public class QRCodeUtil {
         // 读取Icon图像
         BufferedImage scaleImage = null;
         try {
-            scaleImage = scaleImage(iconPath, ICON_WIDTH, ICON_WIDTH, true);
+            scaleImage = scaleImage(iconImage, ICON_WIDTH, ICON_WIDTH, true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -407,10 +446,38 @@ public class QRCodeUtil {
         ImageIO.write(image, FORMAT, destFile);
     }
 
+    /**
+     * 将BufferedImage对象输出成字节数组，便于传输。
+     * @param image
+     * @return
+     * @throws IOException
+     */
     private static byte[] writeToBytes(BufferedImage image) throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(image, FORMAT, os);
         return os.toByteArray();
+    }
+
+    /**
+     * 将输入字节数组输出成BufferedImage
+     * @param srcBytes
+     * @return
+     * @throws IOException
+     */
+    private static BufferedImage readByBytes(byte[] srcBytes) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(srcBytes);
+        return ImageIO.read(in);
+    }
+
+    /**
+     * 将目标文件输出成BufferedImage
+     * @param srcImageFile 目标文件
+     * @return
+     * @throws IOException
+     */
+    private static BufferedImage readByBytes(String srcImageFile) throws IOException {
+        File file = new File(srcImageFile);
+        return ImageIO.read(file);
     }
 
     /**
@@ -434,18 +501,16 @@ public class QRCodeUtil {
 
     /**
      * 把传入的原始图像按高度和宽度进行缩放，生成符合要求的图标。
-     *
-     * @param srcImageFile 源文件地址
+     * @param srcImage 源图片
      * @param height 目标高度
      * @param width 目标宽度
      * @param hasFiller 比例不对时是否需要补白：true为补白; false为不补白;
+     * @return
      * @throws IOException
      */
-    private static BufferedImage scaleImage(String srcImageFile, int height,
+    private static BufferedImage scaleImage(BufferedImage srcImage, int height,
                                             int width, boolean hasFiller) throws IOException {
         double ratio = 0.0; // 缩放比例
-        File file = new File(srcImageFile);
-        BufferedImage srcImage = ImageIO.read(file);
         Image destImage = srcImage.getScaledInstance(
                 width, height, BufferedImage.SCALE_SMOOTH);
         // 计算比例
