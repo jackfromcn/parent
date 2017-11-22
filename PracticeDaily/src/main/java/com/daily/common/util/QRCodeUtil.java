@@ -53,47 +53,6 @@ public class QRCodeUtil {
      */
     private static int FRAME_WIDTH = 2;
 
-    // 测试
-    public static void main(String[] args) throws Exception {
-        /**
-         * 二维码测试。
-         */
-        String iconPath = "timg.jpeg";
-        String content = "http://www.baidu.com";
-        String path = "filePath";
-        File file = new File(iconPath);
-        File qrCode = new File(path + UniqueID.uuid() + "." + FORMAT);
-        File qrCodeWithIcon = new File(path + UniqueID.uuid() + "." + FORMAT);
-        // 生成二维码
-        QRCodeUtil.createQRCodeToFile(content, qrCode);
-        // 生成带图标的二维码
-        QRCodeUtil.createQRCodeWithIncoToFile(content,iconPath, qrCodeWithIcon);
-
-        System.out.println(QRCodeUtil.createQRCodeToPath(content, path));
-        System.out.println(QRCodeUtil.createQRCodeWithIncoToPath(content,iconPath,path));
-        // 解析二维码
-        System.out.println(QRCodeUtil.parseImage(qrCode));
-        // 解析带图标的二维码
-        System.out.println(QRCodeUtil.parseImage(qrCodeWithIcon));
-
-        // 编码成字节数组
-        byte[] data = QRCodeUtil.createQRCodeToBytes(content);
-        String result = QRCodeUtil.parseQRFromBytes(data);
-        System.out.println(result);
-        result = QRCodeUtil.parseQRFromBytes(createQRCodeWithIncoToBytes(content, iconPath));
-        System.out.println(result);
-
-        /**
-         * 一维码测试。
-         */
-        String barCodeContent="6936983800013";
-        File barCode = new File(path + UniqueID.uuid() + "." + FORMAT);
-        // 生成一维码
-        QRCodeUtil.createBarCodeToFile(barCodeContent,barCode);
-        // 解析一维码
-        System.out.println(QRCodeUtil.parseImage(barCode));
-    }
-
     /**
      * 将String编码成一维条形码后,使用字节数组表示,便于传输.
      * @param content
@@ -206,9 +165,9 @@ public class QRCodeUtil {
      * @throws WriterException
      * @throws IOException
      */
-    public static void createBarCodeToPath(String content, String path)
+    public static String createBarCodeToPath(String content, String path)
             throws WriterException, IOException {
-        writeToPath(createBarCode(content),path);
+        return writeToPath(createBarCode(content),path);
     }
 
     /**
@@ -250,6 +209,55 @@ public class QRCodeUtil {
     public static String createQRCodeWithIncoToPath(String content, byte[] iconBytes, String path)
             throws WriterException, IOException {
         return writeToPath(createQRCodeWithIcon(content, readByBytes(iconBytes)), path);
+    }
+
+    /**
+     * 从一个二维码图片的字节信息解码出二维码中的内容。
+     *
+     * @param data 二维码字节数组
+     * @return
+     * @throws ReaderException
+     * @throws IOException
+     */
+    public static String parseImage(byte[] data)
+            throws ReaderException, IOException {
+        ByteArrayInputStream is = new ByteArrayInputStream(data);
+        BufferedImage image = ImageIO.read(is);
+        return parseImage(image);
+    }
+
+    /**
+     * 从一个图片文件中解码出二维码中的内容。
+     *
+     * @param file 二维码文件
+     * @return 解析后的内容。
+     * @throws IOException
+     * @throws ReaderException
+     */
+    public static String parseImage(File file)
+            throws IOException, ReaderException {
+        BufferedImage image = ImageIO.read(file);
+        return parseImage(image);
+    }
+
+    /**
+     * 将字符串编码成一维码（条形码）。
+     * @param content 内容
+     * @return
+     * @throws WriterException
+     * @throws IOException
+     */
+    private static BufferedImage createBarCode(String content)
+            throws WriterException, IOException {
+        Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+        hints.put(EncodeHintType.CHARACTER_SET, CHARSET);
+        hints.put(EncodeHintType.MARGIN, 1);
+        // 二维码读码器和写码器
+        // 一维码的宽>高。这里我设置为 宽:高=2:1
+        BitMatrix matrix = new MultiFormatWriter().encode(content,
+                BarcodeFormat.EAN_13, BARCODE_WIDTH * 3, BARCODE_WIDTH,hints);
+        return toBufferedImage(matrix);
     }
 
     /**
@@ -350,55 +358,6 @@ public class QRCodeUtil {
     }
 
     /**
-     * 从一个二维码图片的字节信息解码出二维码中的内容。
-     *
-     * @param data 二维码字节数组
-     * @return
-     * @throws ReaderException
-     * @throws IOException
-     */
-    public static String parseQRFromBytes(byte[] data)
-            throws ReaderException, IOException {
-        ByteArrayInputStream is = new ByteArrayInputStream(data);
-        BufferedImage image = ImageIO.read(is);
-        return parseImage(image);
-    }
-
-    /**
-     * 从一个图片文件中解码出二维码中的内容。
-     *
-     * @param file 二维码文件
-     * @return 解析后的内容。
-     * @throws IOException
-     * @throws ReaderException
-     */
-    public static String parseImage(File file)
-            throws IOException, ReaderException {
-        BufferedImage image = ImageIO.read(file);
-        return parseImage(image);
-    }
-
-    /**
-     * 将字符串编码成一维码（条形码）。
-     * @param content 内容
-     * @return
-     * @throws WriterException
-     * @throws IOException
-     */
-    public static BufferedImage createBarCode(String content)
-            throws WriterException, IOException {
-        Hashtable<EncodeHintType, Object> hints = new Hashtable<EncodeHintType, Object>();
-        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-        hints.put(EncodeHintType.CHARACTER_SET, CHARSET);
-        hints.put(EncodeHintType.MARGIN, 1);
-        // 二维码读码器和写码器
-        // 一维码的宽>高。这里我设置为 宽:高=2:1
-        BitMatrix matrix = new MultiFormatWriter().encode(content,
-                BarcodeFormat.EAN_13, BARCODE_WIDTH * 3, BARCODE_WIDTH,hints);
-        return toBufferedImage(matrix);
-    }
-
-    /**
      * 从图片中解析出一维码或者二维码的内容。如果解析失败，则抛出NotFoundException。
      * @param image
      * @return
@@ -414,6 +373,69 @@ public class QRCodeUtil {
         Result result = new MultiFormatReader().decode(bitmap,hints);
         // 这里丢掉了Result中其他一些数据
         return result.getText();
+    }
+
+    /**
+     * 将一个BitMatrix对象转换成BufferedImage对象
+     *
+     * @param matrix
+     * @return
+     */
+    private static BufferedImage toBufferedImage(BitMatrix matrix) {
+        int width = matrix.getWidth();
+        int height = matrix.getHeight();
+        BufferedImage image = new BufferedImage(
+                width, height, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                image.setRGB(x, y, matrix.get(x, y) ? BLACK : WHITE);
+            }
+        }
+        return image;
+    }
+
+    /**
+     * 把传入的原始图像按高度和宽度进行缩放，生成符合要求的图标。
+     * @param srcImage 源图片
+     * @param height 目标高度
+     * @param width 目标宽度
+     * @param hasFiller 比例不对时是否需要补白：true为补白; false为不补白;
+     * @return
+     * @throws IOException
+     */
+    private static BufferedImage scaleImage(BufferedImage srcImage, int height,
+                                            int width, boolean hasFiller) throws IOException {
+        double ratio = 0.0; // 缩放比例
+        Image destImage = srcImage.getScaledInstance(
+                width, height, BufferedImage.SCALE_SMOOTH);
+        // 计算比例
+        if ((srcImage.getHeight() > height) || (srcImage.getWidth() > width)) {
+            if (srcImage.getHeight() > srcImage.getWidth()) {
+                ratio = (new Integer(height)).doubleValue() / srcImage.getHeight();
+            } else {
+                ratio = (new Integer(width)).doubleValue() / srcImage.getWidth();
+            }
+            AffineTransformOp op = new AffineTransformOp(
+                    AffineTransform.getScaleInstance(ratio, ratio), null);
+            destImage = op.filter(srcImage, null);
+        }
+        if (hasFiller) {// 补白
+            BufferedImage image = new BufferedImage(
+                    width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphic = image.createGraphics();
+            graphic.setColor(Color.white);
+            graphic.fillRect(0, 0, width, height);
+            if (width == destImage.getWidth(null)) {
+                graphic.drawImage(destImage, 0, (height - destImage.getHeight(null)) / 2,
+                        destImage.getWidth(null), destImage.getHeight(null), Color.white, null);
+            } else {
+                graphic.drawImage(destImage, (width - destImage.getWidth(null)) / 2, 0,
+                        destImage.getWidth(null), destImage.getHeight(null), Color.white, null);
+            }
+            graphic.dispose();
+            destImage = image;
+        }
+        return (BufferedImage) destImage;
     }
 
     /**
@@ -478,69 +500,6 @@ public class QRCodeUtil {
     private static BufferedImage readByBytes(String srcImageFile) throws IOException {
         File file = new File(srcImageFile);
         return ImageIO.read(file);
-    }
-
-    /**
-     * 将一个BitMatrix对象转换成BufferedImage对象
-     *
-     * @param matrix
-     * @return
-     */
-    private static BufferedImage toBufferedImage(BitMatrix matrix) {
-        int width = matrix.getWidth();
-        int height = matrix.getHeight();
-        BufferedImage image = new BufferedImage(
-                width, height, BufferedImage.TYPE_INT_RGB);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                image.setRGB(x, y, matrix.get(x, y) ? BLACK : WHITE);
-            }
-        }
-        return image;
-    }
-
-    /**
-     * 把传入的原始图像按高度和宽度进行缩放，生成符合要求的图标。
-     * @param srcImage 源图片
-     * @param height 目标高度
-     * @param width 目标宽度
-     * @param hasFiller 比例不对时是否需要补白：true为补白; false为不补白;
-     * @return
-     * @throws IOException
-     */
-    private static BufferedImage scaleImage(BufferedImage srcImage, int height,
-                                            int width, boolean hasFiller) throws IOException {
-        double ratio = 0.0; // 缩放比例
-        Image destImage = srcImage.getScaledInstance(
-                width, height, BufferedImage.SCALE_SMOOTH);
-        // 计算比例
-        if ((srcImage.getHeight() > height) || (srcImage.getWidth() > width)) {
-            if (srcImage.getHeight() > srcImage.getWidth()) {
-                ratio = (new Integer(height)).doubleValue() / srcImage.getHeight();
-            } else {
-                ratio = (new Integer(width)).doubleValue() / srcImage.getWidth();
-            }
-            AffineTransformOp op = new AffineTransformOp(
-                    AffineTransform.getScaleInstance(ratio, ratio), null);
-            destImage = op.filter(srcImage, null);
-        }
-        if (hasFiller) {// 补白
-            BufferedImage image = new BufferedImage(
-                    width, height, BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphic = image.createGraphics();
-            graphic.setColor(Color.white);
-            graphic.fillRect(0, 0, width, height);
-            if (width == destImage.getWidth(null)) {
-                graphic.drawImage(destImage, 0, (height - destImage.getHeight(null)) / 2,
-                        destImage.getWidth(null), destImage.getHeight(null), Color.white, null);
-            } else {
-                graphic.drawImage(destImage, (width - destImage.getWidth(null)) / 2, 0,
-                        destImage.getWidth(null), destImage.getHeight(null), Color.white, null);
-            }
-            graphic.dispose();
-            destImage = image;
-        }
-        return (BufferedImage) destImage;
     }
 
 }
